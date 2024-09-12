@@ -72,7 +72,7 @@ def main(args):
         for lines in file:
             data.append(lines) # (1000, 7)
 
-    purity_measurements = {'info': compute_entropy, 'gini': compute_gini_index, 'majority': compute_majority_error}
+    purity_measurements = {'entropy': compute_entropy, 'gini': compute_gini_index, 'majority': compute_majority_error}
     tree = create_tree(data, args.attribute_list.copy(), args.value_list, purity_measurements[args.purity_measure], args.max_depth)
     print(tree)
     return tree
@@ -108,4 +108,4 @@ if __name__ == '__main__':
     args = get_arguments()
     tree = main(args)
     test_accuracy = test(tree, args.attribute_list)
-    print(test_accuracy)
+    print('test accuracy: {}'.format(test_accuracy))
