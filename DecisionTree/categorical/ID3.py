@@ -10,6 +10,7 @@ def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--purity_measure", type=str, default="entropy", help='[entropy, gini, majority]')
     parser.add_argument("--max_depth", type=int, default=66)
+    parser.add_argument("--test_set", type=str, default='test', help='[test, train]')
     parser.add_argument("--attribute_list", default=['buying', 'maint', 'doors', 'persons', 'lug_boot', 'safety'])
     parser.add_argument("--value_list", default={'buying': ['vhigh', 'high', 'med', 'low'], 'maint': ['vhigh', 'high', 'med', 'low'], 
                                                  'doors': ['2', '3', '4', '5more'], 'persons': ['2', '4', 'more'], 
@@ -74,7 +75,7 @@ def main(args):
 
     purity_measurements = {'entropy': compute_entropy, 'gini': compute_gini_index, 'majority': compute_majority_error}
     tree = create_tree(data, args.attribute_list.copy(), args.value_list, purity_measurements[args.purity_measure], args.max_depth)
-    print(tree)
+    # print(tree)
     return tree
 
 
@@ -91,21 +92,25 @@ def predict(tree, attributes, test_feature):
             return label
         
 
-def test(tree, attribute_list):
+def test(tree, attribute_list, testset):
     data_count = 0
     correct_pred_count = 0
-    with open('./car/test.csv', mode ='r') as file:
+    if testset == 'train':
+        file_name = './car/train.csv'
+    else:
+        file_name = './car/test.csv'
+    with open(file_name, mode ='r') as file:
         file = csv.reader(file)
         for lines in file:
             prediction = predict(tree, attribute_list, lines[:-1])
             data_count += 1
             if prediction == lines[-1]:
                 correct_pred_count += 1
-    return correct_pred_count / data_count
+    return 1 - correct_pred_count / data_count
 
 
 if __name__ == '__main__':
     args = get_arguments()
     tree = main(args)
-    test_accuracy = test(tree, args.attribute_list)
-    print('test accuracy: {}'.format(test_accuracy))
+    test_error = test(tree, args.attribute_list, args.test_set)
+    print('test error: {}'.format(test_error))
