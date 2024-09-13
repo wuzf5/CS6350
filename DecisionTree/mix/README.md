@@ -5,7 +5,7 @@
 ## Usage
 
 ```bash
-cd ./DecisionTree/numerical
+cd ./DecisionTree/mix
 python main.py
 ```
 
