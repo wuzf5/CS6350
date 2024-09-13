@@ -9,7 +9,7 @@ from purity_compute import compute_entropy, compute_gini_index, compute_majority
 def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--purity_measure", type=str, default="entropy", help='[entropy, gini, majority]')
-    parser.add_argument("--max_depth", type=int, default=66)
+    parser.add_argument("--max_depth", type=int, default=6)
     parser.add_argument("--test_set", type=str, default='test', help='[test, train]')
     parser.add_argument("--attribute_list", default=['buying', 'maint', 'doors', 'persons', 'lug_boot', 'safety'])
     parser.add_argument("--value_list", default={'buying': ['vhigh', 'high', 'med', 'low'], 'maint': ['vhigh', 'high', 'med', 'low'], 
@@ -18,22 +18,15 @@ def get_arguments():
     return parser.parse_args()
 
 
-def get_subset(dataset, column, value):
-    panda_dataset = pd.DataFrame(data=dataset)
-    subset = panda_dataset[panda_dataset[column] == value]
-    del subset[column]
-    return subset.values.tolist()
-
-
 def select_next_attribute(dataset, purity_measure):
     expected_ents = []
-    for attr in range(len(dataset[0])-1):
-        feature_value_list = pd.DataFrame(dataset)[attr].values.tolist()
+    for attr in dataset.columns[:-1]:
+        feature_value_list = dataset[attr]
         probs, ents = [], []
-        for value in set(feature_value_list):
-            subset = get_subset(dataset, attr, value)
+        for value in set(feature_value_list.values.tolist()):
+            subset = dataset[dataset[attr] == value].drop(attr, axis=1)
             probs.append(len(subset) / len(dataset))
-            ents.append(purity_measure(subset))
+            ents.append(purity_measure(subset[subset.columns[-1]].values.tolist()))
         expected_ent = (array(probs) * array(ents)).sum()
         expected_ents.append(expected_ent)
     
@@ -41,25 +34,26 @@ def select_next_attribute(dataset, purity_measure):
 
 
 def create_tree(dataset, attributes, value_list, purity_measure, max_depth, depth=0):
-    label_list = [example[-1] for example in dataset]
+    label_list = dataset['label']
     # stopping criterion: all labels in the subset are the same, or the tree has reached its pre-defined maximum depth
-    if len(set(label_list)) == 1 or (max_depth is not None and depth == max_depth):
-        return label_list[0]
+    if len(set(label_list)) == 1:
+        return label_list.iloc[0]
+    if max_depth is not None and depth == max_depth:
+        most_common_label = max(set(dataset['label']), key=dataset['label'].values.tolist().count)
+        return most_common_label
     
     next_attr_idx = select_next_attribute(dataset, purity_measure)
     new_branch = attributes[next_attr_idx]
     # create a new branch on the tree
     tree = {new_branch:{}}
-    depth += 1
     del attributes[next_attr_idx]
-    feature_value_list = pd.DataFrame(dataset)[next_attr_idx].values.tolist() # list of values of the corres feature (in the subset)
-    for value in set(feature_value_list):
-        subset = get_subset(dataset, next_attr_idx, value)
-        tree[new_branch][value] = create_tree(subset, attributes.copy(), value_list, purity_measure, max_depth, depth)
+    feature_value_list = dataset[new_branch] # list of values of the corres feature (in the subset)
+    for value in set(feature_value_list.values.tolist()):
+        subset = dataset[dataset[new_branch] == value].drop(new_branch, axis=1)
+        tree[new_branch][value] = create_tree(subset, attributes.copy(), value_list, purity_measure, max_depth, depth+1)
         # complete the label for missing values for better generalization
         if isinstance(tree[new_branch][value], str) and len(feature_value_list) < len(value_list[new_branch]):
-            subset_label_list = [example[-1] for example in subset]
-            most_common_label = max(set(subset_label_list), key=subset_label_list.count)
+            most_common_label = max(set(subset['label']), key=subset['label'].values.tolist().count)
             for value in value_list[new_branch]:
                 if value not in feature_value_list:
                     tree[new_branch][value] = most_common_label
@@ -72,6 +66,9 @@ def main(args):
         file = csv.reader(file)
         for lines in file:
             data.append(lines) # (1000, 7)
+    columns_names = args.attribute_list.copy()
+    columns_names.append('label')
+    data = pd.DataFrame(data, columns=columns_names)
 
     purity_measurements = {'entropy': compute_entropy, 'gini': compute_gini_index, 'majority': compute_majority_error}
     tree = create_tree(data, args.attribute_list.copy(), args.value_list, purity_measurements[args.purity_measure], args.max_depth)
