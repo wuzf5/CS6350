@@ -154,32 +154,40 @@ if __name__ == '__main__':
             # print(col, len(trainset[col].values.tolist()), (trainset[col] != 'unknown').sum(), drop_unknown_rows.shape, most_common_value)
             trainset.loc[trainset[col] == 'unknown', col] = most_common_value
 
-    train_acc, test_acc = [], []
-    for i in range(16):
-        train_acc.append([])
-        test_acc.append([])
-        for j, measure in enumerate(['entropy', 'gini', 'majority']):
-            for test in ['train', 'test']:
-                args.max_depth = i + 1
-                args.purity_measure = measure
-                args.test_set = test
 
-                tree = ID3DecisionTree(args)
-                tree.train(trainset, trainlabels)
+    tree = ID3DecisionTree(args)
+    tree.train(trainset, trainlabels)
+    # testing
+    testdata = pd.read_csv('./bank/test.csv') if args.test_set == 'test' else pd.read_csv('./bank/train.csv')
+    print('prediction error: {}'.format(tree.test(testdata)))
+    # print(' {} & '.format(tree.test(testdata)))
 
-                # testing
-                testdata = pd.read_csv('./bank/test.csv') if args.test_set == 'test' else pd.read_csv('./bank/train.csv')
-                if args.test_set == 'test':
-                    test_acc[i].append(tree.test(testdata))
-                else:
-                    train_acc[i].append(tree.test(testdata))
+    # train_acc, test_acc = [], []
+    # for i in range(16):
+    #     train_acc.append([])
+    #     test_acc.append([])
+    #     for j, measure in enumerate(['entropy', 'gini', 'majority']):
+    #         for test in ['train', 'test']:
+    #             args.max_depth = i + 1
+    #             args.purity_measure = measure
+    #             args.test_set = test
 
-    train_avg = np.array(train_acc).mean(axis=1)
-    np.round(train_avg, 3)
-    test_avg = np.array(test_acc).mean(axis=1)
-    np.round(test_avg, 3)
-    print(np.array(train_acc).shape)
-    print('training error: {}'.format(train_acc))
-    print('average training error: {}'.format(train_avg))
-    print('testing error: {}'.format(test_acc))
-    print('average testing error: {}'.format(test_avg))
+    #             tree = ID3DecisionTree(args)
+    #             tree.train(trainset, trainlabels)
+
+    #             # testing
+    #             testdata = pd.read_csv('./bank/test.csv') if args.test_set == 'test' else pd.read_csv('./bank/train.csv')
+    #             if args.test_set == 'test':
+    #                 test_acc[i].append(tree.test(testdata))
+    #             else:
+    #                 train_acc[i].append(tree.test(testdata))
+
+    # train_avg = np.array(train_acc).mean(axis=1)
+    # np.round(train_avg, 3)
+    # test_avg = np.array(test_acc).mean(axis=1)
+    # np.round(test_avg, 3)
+    # print(np.array(train_acc).shape)
+    # print('training error: {}'.format(train_acc))
+    # print('average training error: {}'.format(train_avg))
+    # print('testing error: {}'.format(test_acc))
+    # print('average testing error: {}'.format(test_avg))

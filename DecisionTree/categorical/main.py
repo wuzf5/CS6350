@@ -10,7 +10,7 @@ def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--purity_measure", type=str, default="entropy", help='[entropy, gini, majority]')
     parser.add_argument("--max_depth", type=int, default=6)
-    parser.add_argument("--test_set", type=str, default='test', help='[test, train]')
+    parser.add_argument("--test_set", type=str, default='train', help='[test, train]')
     parser.add_argument("--attribute_list", default=['buying', 'maint', 'doors', 'persons', 'lug_boot', 'safety'])
     parser.add_argument("--value_list", default={'buying': ['vhigh', 'high', 'med', 'low'], 'maint': ['vhigh', 'high', 'med', 'low'], 
                                                  'doors': ['2', '3', '4', '5more'], 'persons': ['2', '4', 'more'], 
@@ -39,7 +39,7 @@ def create_tree(dataset, attributes, value_list, purity_measure, max_depth, dept
     if len(set(label_list)) == 1:
         return label_list.iloc[0]
     if max_depth is not None and depth == max_depth:
-        most_common_label = max(set(dataset['label']), key=dataset['label'].values.tolist().count)
+        most_common_label = max(set(label_list), key=label_list.values.tolist().count)
         return most_common_label
     
     next_attr_idx = select_next_attribute(dataset, purity_measure)
@@ -52,11 +52,11 @@ def create_tree(dataset, attributes, value_list, purity_measure, max_depth, dept
         subset = dataset[dataset[new_branch] == value].drop(new_branch, axis=1)
         tree[new_branch][value] = create_tree(subset, attributes.copy(), value_list, purity_measure, max_depth, depth+1)
         # complete the label for missing values for better generalization
-        if isinstance(tree[new_branch][value], str) and len(feature_value_list) < len(value_list[new_branch]):
-            most_common_label = max(set(subset['label']), key=subset['label'].values.tolist().count)
-            for value in value_list[new_branch]:
-                if value not in feature_value_list:
-                    tree[new_branch][value] = most_common_label
+        # if isinstance(tree[new_branch][value], str) and len(feature_value_list) < len(value_list[new_branch]):
+        #     most_common_label = max(set(subset['label']), key=subset['label'].values.tolist().count)
+        #     for value in value_list[new_branch]:
+        #         if value not in feature_value_list:
+        #             tree[new_branch][value] = most_common_label
     return tree
 
 
@@ -108,6 +108,9 @@ def test(tree, attribute_list, testset):
 
 if __name__ == '__main__':
     args = get_arguments()
+    
+
+
     tree = main(args)
     test_error = test(tree, args.attribute_list, args.test_set)
-    print('test error: {}'.format(test_error))
+    print('prediction error: {}'.format(test_error))
