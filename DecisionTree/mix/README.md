@@ -6,7 +6,8 @@
 
 ```bash
 cd ./DecisionTree/mix
-python main.py
+chmod +x ./run.sh
+./run.sh
 ```
 
 

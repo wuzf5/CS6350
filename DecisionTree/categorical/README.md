@@ -15,7 +15,7 @@ To run a full sweep on all possible values of `purity_measure` and `max_depth`, 
 
 ```bash
 cd ./DecisionTree/categorical
-chmod +x ./varying_measure&depth.sh
-./varying_measure&depth.sh
+chmod +x ./run.sh
+./run.sh
 ```
 
