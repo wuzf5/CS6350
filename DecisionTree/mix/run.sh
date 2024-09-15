@@ -3,7 +3,7 @@ max_max_depth=16
 purity_measures=('entropy' 'majority' 'gini')
 test_set=('train' 'test')
 
-echo "For Question 3(a)"
+echo "-----------------------------For Question 3(a)-----------------------------"
 for dataset in "${test_set[@]}";
 do
     for measure in "${purity_measures[@]}";
@@ -15,7 +15,7 @@ do
         done
     done
 done
-echo "For Question 3(b)"
+echo "-----------------------------For Question 3(b)-----------------------------"
 for dataset in "${test_set[@]}";
 do
     for measure in "${purity_measures[@]}";
