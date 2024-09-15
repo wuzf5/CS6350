@@ -149,9 +149,9 @@ if __name__ == '__main__':
     # deal with 'unknown' values
     for col in trainset.columns:
         if 'unknown' in trainset[col].values.tolist():
-            # print(col, len(trainset[col].values.tolist()), (trainset[col] != 'unknown').sum())
             drop_unknown_rows = trainset[trainset[col] != 'unknown']
             most_common_value = max(set(drop_unknown_rows[col]), key=drop_unknown_rows[col].values.tolist().count)
+            # print(col, len(trainset[col].values.tolist()), (trainset[col] != 'unknown').sum(), drop_unknown_rows.shape, most_common_value)
             trainset.loc[trainset[col] == 'unknown', col] = most_common_value
 
     train_acc, test_acc = [], []
