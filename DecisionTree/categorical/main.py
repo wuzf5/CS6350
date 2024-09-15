@@ -103,14 +103,11 @@ def test(tree, attribute_list, testset):
             data_count += 1
             if prediction == lines[-1]:
                 correct_pred_count += 1
-    return 1 - correct_pred_count / data_count
+    return round(1 - correct_pred_count / data_count, 3)
 
 
 if __name__ == '__main__':
     args = get_arguments()
-    
-
-
     tree = main(args)
     test_error = test(tree, args.attribute_list, args.test_set)
     print('prediction error: {}'.format(test_error))
