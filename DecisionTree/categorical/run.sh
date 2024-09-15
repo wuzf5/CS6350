@@ -7,6 +7,6 @@ do
     for measure in "${purity_measures[@]}";
     do
         echo "max depth is ${max_depth}, purity measure is ${measure}:"
-        python main.py --max_depth ${max_depth} --purity_measure ${measure}
+        python3 main.py --max_depth ${max_depth} --purity_measure ${measure}
     done
 done
