@@ -116,6 +116,8 @@ class ID3DecisionTree:
         if self.feature_types[feature] == 'categorical':
             if row[feature] in tree[feature]:
                 return self._predict(row, tree[feature][row[feature]])
+            else:
+                return max(tree[feature].values(), key=lambda x: list(tree[feature].values()).count(x))
         else:  # numeric
             median = self.medians[feature]
             if row[feature] <= median:

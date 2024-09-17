@@ -116,6 +116,8 @@ class ID3DecisionTree:
         if self.feature_types[feature] == 'categorical':
             if row[feature] in tree[feature]:
                 return self._predict(row, tree[feature][row[feature]])
+            else:
+                return max(tree[feature].values(), key=lambda x: list(tree[feature].values()).count(x))
         else:  # numeric
             median = self.medians[feature]
             if row[feature] <= median:
@@ -146,13 +148,14 @@ if __name__ == '__main__':
     trainset = traindata.drop('label', axis=1)
     trainlabels = traindata['label']
 
-    # deal with 'unknown' values
+    # dealing with 'unknown' values
     for col in trainset.columns:
         if 'unknown' in trainset[col].values.tolist():
             drop_unknown_rows = trainset[trainset[col] != 'unknown']
             most_common_value = max(set(drop_unknown_rows[col]), key=drop_unknown_rows[col].values.tolist().count)
             # print(col, len(trainset[col].values.tolist()), (trainset[col] != 'unknown').sum(), drop_unknown_rows.shape, most_common_value)
             trainset.loc[trainset[col] == 'unknown', col] = most_common_value
+    
 
 
     tree = ID3DecisionTree(args)
