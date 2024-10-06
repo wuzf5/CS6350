@@ -3,14 +3,16 @@ import pandas as pd
 
 from purity_compute import compute_entropy, compute_gini_index, compute_majority_error
 
+
 class ID3DecisionTree:
     def __init__(self, args):
         self.max_depth = args.max_depth
         purity_measurements = {'entropy': compute_entropy, 'gini': compute_gini_index, 'majority': compute_majority_error}
         self.purity_measure = purity_measurements[args.purity_measure]
         self.attribute_list = args.attribute_list
-        # self.value_list_set = args.value_list_set
+        self.min_split_size = args.min_split_size
         self.tree = None
+        self.G = args.G
 
     def train(self, dataset, labels):
         self.features = list(dataset.columns)
@@ -45,6 +47,8 @@ class ID3DecisionTree:
             return most_common_label
 
         best_feature = self._select_next_attribute(dataset, labels)
+        if best_feature is None:
+            return labels.reset_index(drop=True).mode().iloc[0]
         tree = {best_feature: {}}
 
         if self.feature_types[best_feature] == 'categorical':
@@ -75,7 +79,12 @@ class ID3DecisionTree:
 
     def _select_next_attribute(self, dataset, labels):
         expected_ents = []
-        for feature in dataset.columns:
+        # print(np.array(dataset.columns))
+        if len(dataset.columns) < self.G:
+            selected_columns = dataset.columns
+        else:
+            selected_columns = np.random.choice(np.array(dataset.columns), self.G, replace=False)
+        for feature in selected_columns:
             feature_value_list = dataset[feature]
             if self.feature_types[feature] == 'categorical':
                 probs, ents = [], []
@@ -121,76 +130,106 @@ class ID3DecisionTree:
             prediction = self._predict(test_feature, self.tree)
             predictions.append(prediction)
         return np.stack(predictions)
-    
-    def test(self, testdata):
-        testdata.columns = columns
-        test_feature_set = testdata.drop('label', axis=1)
-        test_label_set = testdata['label']
 
-        correct_pred_count = 0
-        for i in range(len(test_feature_set)):
-            test_feature = test_feature_set.iloc[i]
-            prediction = self._predict(test_feature, self.tree)
-            if not isinstance(prediction, str):
-                print(11, prediction)
-            # print(test_label_set.iloc[i])
-            if prediction == test_label_set.iloc[i]:
-                correct_pred_count += 1
-        return round(1 - correct_pred_count / len(testdata), 3)
+
+class RandomForest:
+    def __init__(self, args):
+        self.n_trees_per_forest = int(args.n_trees_per_forest)
+        self.args = args
+        self.sample_size = args.sample_size
+        self.trees = []
+
+    def _sample_data_with_replacement(self, dataset):
+        sampled_dataset = dataset.sample(dataset.shape[0], axis=0, replace=True)
+        features = sampled_dataset.drop('label', axis=1)
+        labels = sampled_dataset['label']
+        return features, labels
+
+    def train(self, dataset):
+        for t in range(self.n_trees_per_forest):
+            features, labels = self._sample_data_with_replacement(dataset)
+            tree = ID3DecisionTree(self.args)
+            tree.train(features, labels)
+            self.trees.append(tree)
+    
+    def predict(self, features):
+        predictions = []
+        for tree in self.trees:
+            predictions.append(tree.predict_batch(features))
+        final_predictions = pd.DataFrame(predictions).mode().iloc[0]
+        return final_predictions
 
 
 if __name__ == '__main__':
     import argparse
+    from matplotlib import pyplot as plt
 
-    def get_arguments():
-        parser = argparse.ArgumentParser()
-        parser.add_argument("--purity_measure", type=str, default="entropy", help='[entropy, gini, majority]')
-        parser.add_argument("--max_depth", type=int, default=16)
-        parser.add_argument("--test_set", type=str, default='test', help='[test, train]')
-        parser.add_argument("--attribute_list", default=['age', 'job', 'marital', 'education', 'default', 'balance', 'housing', 'loan',
-                                                        'contact', 'day', 'month', 'duration', 'campaign', 'pdays', 'previous', 'poutcome'])
-        return parser.parse_args()
-    args = get_arguments()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--purity_measure", type=str, default="entropy", help='[entropy, gini, majority]')
+    parser.add_argument("--max_depth", type=int, default=16)
+    parser.add_argument("--test_set", type=str, default='test', help='[test, train]')
+    parser.add_argument("--attribute_list", default=['age', 'job', 'marital', 'education', 'default', 'balance', 'housing', 'loan',
+                                                    'contact', 'day', 'month', 'duration', 'campaign', 'pdays', 'previous', 'poutcome'])
+    parser.add_argument("--n_trees_per_forest", type=int, default=500)
+    parser.add_argument("--n_forests", type=int, default=10)
+    parser.add_argument("--sample_size", type=int, default=100)
+    parser.add_argument("--min_split_size", type=int, default=50)
+    parser.add_argument("--G", type=int, default=4, help='size of the feature subset')
+    args = parser.parse_args()
+
 
     columns = args.attribute_list.copy()
     columns.append('label')
     traindata = pd.read_csv('../../Datasets/bank/train.csv', header=None)
-    traindata.columns = columns
-    trainset = traindata.drop('label', axis=1)
-    trainlabels = traindata['label']
 
-    tree = ID3DecisionTree(args)
-    tree.train(trainset, trainlabels)
-    # testing
-    testdata = pd.read_csv('../../Datasets/bank/test.csv', header=None) if args.test_set == 'test' else pd.read_csv('../../Datasets/bank/train.csv')
-    print('prediction error: {}'.format(tree.test(testdata)))
-    # print(' {} & '.format(tree.test(testdata)))
+    # testing data processing
+    testdata = pd.read_csv('../../Datasets/bank/test.csv', header=None) # if args.test_set == 'test' else pd.read_csv('../bank/train.csv')
+    testdata.columns = columns
+    test_features = testdata.drop('label', axis=1)
+    test_labels = testdata['label']
+    test_labels[test_labels == 'yes'] = 1.
+    test_labels[test_labels == 'no'] = 0.
 
-    # train_acc, test_acc = [], []
-    # for i in range(16):
-    #     train_acc.append([])
-    #     test_acc.append([])
-    #     for j, measure in enumerate(['entropy', 'gini', 'majority']):
-    #         for test in ['train', 'test']:
-    #             args.max_depth = i + 1
-    #             args.purity_measure = measure
-    #             args.test_set = test
+    forests = []
+    single_trees = []
+    training_errors = []
+    testing_errors = []
+    for i in range(1, args.n_forests+1):
+        traindata = traindata.sample(1000, axis=0, replace=False).reset_index(drop=True)
+        traindata.columns = columns
+        train_features = traindata.drop('label', axis=1)
+        train_labels = traindata['label']
+        train_labels[train_labels == 'yes'] = 1.
+        train_labels[train_labels == 'no'] = 0.
+        forest = RandomForest(args)
+        forest.train(traindata)
+        forests.append(forest)
+        single_trees.append(forest.trees[0])
 
-    #             tree = ID3DecisionTree(args)
-    #             tree.train(trainset, trainlabels)
+    single_tree_predictions = []
+    for single_tree in single_trees:
+        single_tree_predictions.append(single_tree.predict_batch(test_features))
+    single_tree_predictions = np.stack(single_tree_predictions) # (n_forests, 4999)
+    avg_single_tree_pred = single_tree_predictions.mean(axis=0, keepdims=True) # (1, 4999)
+    single_tree_bias = (np.squeeze(avg_single_tree_pred) - test_labels) ** 2
+    avg_single_tree_bias = single_tree_bias.mean()
+    print('(SINGLE TREE) average bias w.r.t. all test samples: ', avg_single_tree_bias)
+    single_tree_sample_var = (1 / (args.n_forests-1)) * ((single_tree_predictions - avg_single_tree_pred) ** 2).sum(axis=0)
+    avg_single_tree_sample_var = single_tree_sample_var.mean()
+    print('(SINGLE TREE) average var w.r.t. all test samples: ', avg_single_tree_sample_var)
+    single_general_squared_error = avg_single_tree_bias + avg_single_tree_sample_var
+    print('(SINGLE TREE) general squared error w.r.t. test examples: ', single_general_squared_error)
 
-    #             # testing
-    #             testdata = pd.read_csv('./bank/test.csv') if args.test_set == 'test' else pd.read_csv('./bank/train.csv')
-    #             if args.test_set == 'test':
-    #                 test_acc[i].append(tree.test(testdata))
-    #             else:
-    #                 train_acc[i].append(tree.test(testdata))
-    # train_avg = np.array(train_acc).mean(axis=1)
-    # np.round(train_avg, 3)
-    # test_avg = np.array(test_acc).mean(axis=1)
-    # np.round(test_avg, 3)
-    # print(np.array(train_acc).shape)
-    # print('training error: {}'.format(train_acc))
-    # print('average training error: {}'.format(train_avg))
-    # print('testing error: {}'.format(test_acc))
-    # print('average testing error: {}'.format(test_avg))
+    bagged_tree_predictions = []
+    for bag in forests:
+        bagged_tree_predictions.append(bag.predict(test_features).to_numpy()) # (4999,)
+    bagged_tree_predictions = np.stack(bagged_tree_predictions)
+    avg_bagged_tree_pred = bagged_tree_predictions.mean(axis=0, keepdims=True) # (1, 4999)
+    bagged_tree_bias = (np.squeeze(avg_bagged_tree_pred) - test_labels) ** 2
+    avg_bagged_tree_bias = bagged_tree_bias.mean()
+    print('(RANDOM FOREST) average bias w.r.t. all test samples: ', avg_bagged_tree_bias)
+    bagged_tree_sample_var = (1 / (args.n_forests-1)) * ((bagged_tree_predictions - avg_bagged_tree_pred) ** 2).sum(axis=0)
+    avg_bagged_tree_sample_var = bagged_tree_sample_var.mean()
+    print('(RANDOM FOREST) average var w.r.t. all test samples: ', avg_bagged_tree_sample_var)
+    bagged_general_squared_error = avg_bagged_tree_bias + avg_bagged_tree_sample_var
+    print('(RANDOM FOREST) general squared error w.r.t. test examples: ', bagged_general_squared_error)

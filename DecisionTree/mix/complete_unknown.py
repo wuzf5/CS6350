@@ -155,7 +155,7 @@ if __name__ == '__main__':
             most_common_value = max(set(drop_unknown_rows[col]), key=drop_unknown_rows[col].values.tolist().count)
             # print(col, len(trainset[col].values.tolist()), (trainset[col] != 'unknown').sum(), drop_unknown_rows.shape, most_common_value)
             trainset.loc[trainset[col] == 'unknown', col] = most_common_value
-    
+            
 
 
     tree = ID3DecisionTree(args)

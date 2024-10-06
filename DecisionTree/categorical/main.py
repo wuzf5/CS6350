@@ -10,7 +10,7 @@ def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("--purity_measure", type=str, default="entropy", help='[entropy, gini, majority]')
     parser.add_argument("--max_depth", type=int, default=6)
-    parser.add_argument("--test_set", type=str, default='train', help='[test, train]')
+    parser.add_argument("--test_set", type=str, default='test', help='[test, train]')
     parser.add_argument("--attribute_list", default=['buying', 'maint', 'doors', 'persons', 'lug_boot', 'safety'])
     parser.add_argument("--value_list", default={'buying': ['vhigh', 'high', 'med', 'low'], 'maint': ['vhigh', 'high', 'med', 'low'], 
                                                  'doors': ['2', '3', '4', '5more'], 'persons': ['2', '4', 'more'], 
@@ -62,7 +62,7 @@ def create_tree(dataset, attributes, value_list, purity_measure, max_depth, dept
 
 def main(args):
     data = []
-    with open('./car/train.csv', mode ='r') as file:
+    with open('../../Datasets/car/train.csv', mode ='r') as file:
         file = csv.reader(file)
         for lines in file:
             data.append(lines) # (1000, 7)
@@ -93,9 +93,9 @@ def test(tree, attribute_list, testset):
     data_count = 0
     correct_pred_count = 0
     if testset == 'train':
-        file_name = './car/train.csv'
+        file_name = '../../Datasets/car/train.csv'
     else:
-        file_name = './car/test.csv'
+        file_name = '../../Datasets/car/test.csv'
     with open(file_name, mode ='r') as file:
         file = csv.reader(file)
         for lines in file:
