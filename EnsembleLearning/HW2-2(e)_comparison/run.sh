@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # echo "running bagged tree algorithm for 1 to 500 bagging size, the result can be seen in the figure in the same folder"
-python3 main.py --n_forests 100 --n_trees_per_forest 500 --G 4
+python main.py --n_forests 100 --n_trees_per_forest 500 --G 4
 
 # (SINGLE TREE) average bias w.r.t. all test samples:  0.11926732000000027
 # (SINGLE TREE) average var w.r.t. all test samples:  0.05843301010101011

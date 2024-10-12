@@ -191,13 +191,14 @@ if __name__ == '__main__':
     test_features = testdata.drop('label', axis=1)
     test_labels = testdata['label']
 
-
+    all_training_errors = []
+    all_testing_errors = []
     for g in [2, 4, 6]:
         args.G = int(g)
         training_errors = []
         testing_errors = []
         for i in range(1, args.n_forests+1):
-            args.n_trees_per_forest = i
+            args.n_trees_per_forest = i + 250
             forest = RandomForest(args)
             forest.train(traindata)
             training_error = 1 - (forest.predict(train_features) == train_labels).mean()
@@ -206,8 +207,11 @@ if __name__ == '__main__':
             print('testing error using {} trees with {} subset feature: {}'.format(i, g, testing_error))
             training_errors.append(training_error)
             testing_errors.append(testing_error)
-    
+        all_training_errors.append(training_errors)
+        all_testing_errors.append(testing_errors)
         plt.plot(np.arange(len(training_errors)) + 1, training_errors, linewidth=1.5, label='training error with G={}'.format(g))
         plt.plot(np.arange(len(training_errors)) + 1, testing_errors, linewidth=1.5, label='testing error with G={}'.format(g))
     plt.legend(loc='best', prop={'size': 12})
-    plt.savefig('bagged_tree_error')
+    plt.savefig('bagged_tree_error_secondhalf')
+    np.save('training_errors_secondhalf', all_training_errors)
+    np.save('testing_errors_secondhalf', all_testing_errors)
