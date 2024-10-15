@@ -42,7 +42,7 @@ class ID3DecisionTree:
         if len(set(labels)) == 1:
             return labels.iloc[0]
 
-        if (self.max_depth and depth == self.max_depth) or dataset.shape[0] <= self.min_split_size:
+        if (self.max_depth and depth == self.max_depth):# or dataset.shape[0] <= self.min_split_size:
             most_common_label = labels.reset_index(drop=True).mode().iloc[0]
             return most_common_label
 

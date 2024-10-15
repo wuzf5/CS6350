@@ -198,7 +198,7 @@ if __name__ == '__main__':
         training_errors = []
         testing_errors = []
         for i in range(1, args.n_forests+1):
-            args.n_trees_per_forest = i + 250
+            args.n_trees_per_forest = i
             forest = RandomForest(args)
             forest.train(traindata)
             training_error = 1 - (forest.predict(train_features) == train_labels).mean()
@@ -212,6 +212,6 @@ if __name__ == '__main__':
         plt.plot(np.arange(len(training_errors)) + 1, training_errors, linewidth=1.5, label='training error with G={}'.format(g))
         plt.plot(np.arange(len(training_errors)) + 1, testing_errors, linewidth=1.5, label='testing error with G={}'.format(g))
     plt.legend(loc='best', prop={'size': 12})
-    plt.savefig('bagged_tree_error_secondhalf')
-    np.save('training_errors_secondhalf', all_training_errors)
-    np.save('testing_errors_secondhalf', all_testing_errors)
+    plt.savefig('random_forest_error')
+    np.save('training_errors', all_training_errors)
+    np.save('testing_errors', all_testing_errors)
