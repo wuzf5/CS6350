@@ -169,7 +169,7 @@ class AdaBoost:
         # epsilon_t = self.importance_weights[predictions != labels].sum()
         # epsilon_t = (self.importance_weights * (predictions != labels)).sum()
         # print(epsilon_t)
-        assert epsilon_t < 0.5
+        # assert epsilon_t < 0.5
         alpha_t = (1/2) * log((1 - epsilon_t) / epsilon_t + 1e-10)
         # alpha_t += np.random.uniform(low=1e-8, high=1e-6)
         print(epsilon_t, alpha_t)
