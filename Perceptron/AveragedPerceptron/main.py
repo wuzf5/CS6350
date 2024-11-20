@@ -12,8 +12,8 @@ class AveragedPerceptron:
 
     def train(self, Xy):
         assert self.B == Xy.shape[0]
-        assert self.n == Xy.shape[1] - 1
         X, y = Xy[:, :-1], Xy[:, -1]
+        X = np.concatenate((X, np.ones((X.shape[0], 1))), axis=-1)
         a = np.zeros_like(self.w)
         for t in range(self.T):
             for i, x in enumerate(X):
@@ -21,11 +21,9 @@ class AveragedPerceptron:
                     self.w += self.r * y[i] * x
                 a += self.w
         return a
-    
-    # def predict_one(self, x):
-    #     return np.sign(np.sum([c * np.sign((w*x).sum()) for c, w in zip(self.votes, self.weights)]))
 
     def predict(self, X):
+        X = np.concatenate((X, np.ones((X.shape[0], 1))), axis=-1)
         return np.sign((a[None, :] * X).sum(-1))
     
 
@@ -40,7 +38,7 @@ if __name__ == '__main__':
     Xy = pd.read_csv('../../Datasets/bank-note/train.csv', header=None)
     Xy = Xy.replace({Xy.columns[-1]: 0}, -1).to_numpy()
     B, n = Xy.shape
-    model = AveragedPerceptron(args, n - 1, B)
+    model = AveragedPerceptron(args, n, B)
     a = model.train(Xy)
     print('The weight vector a is: {}'.format(a))
 

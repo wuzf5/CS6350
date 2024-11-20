@@ -14,8 +14,9 @@ class VotedPerceptron:
 
     def train(self, Xy):
         assert self.B == Xy.shape[0]
-        assert self.n == Xy.shape[1] - 1
+        assert self.n == Xy.shape[1]
         X, y = Xy[:, :-1], Xy[:, -1]
+        X = np.concatenate((X, np.ones((X.shape[0], 1))), axis=-1)
         for t in range(self.T):
             # shuffled_idx = np.random.choice(self.B, size=self.B, replace=False)
             # Xy = Xy[shuffled_idx]
@@ -30,10 +31,11 @@ class VotedPerceptron:
                     correct_count += 1
         return self.weights, self.votes
     
-    def predict_one(self, x):
-        return np.sign(np.sum([c * np.sign((w*x).sum()) for c, w in zip(self.votes, self.weights)]))
+    # def predict_one(self, x):
+    #     return np.sign(np.sum([c * np.sign((w*x).sum()) for c, w in zip(self.votes, self.weights)]))
 
     def predict(self, X):
+        X = np.concatenate((X, np.ones((X.shape[0], 1))), axis=-1)
         return np.sign(np.sum([c * np.sign((w[None, :]*X).sum(-1)) for c, w in zip(self.votes, self.weights)], axis=0))
     
 
@@ -48,7 +50,7 @@ if __name__ == '__main__':
     Xy = pd.read_csv('../../Datasets/bank-note/train.csv', header=None)
     Xy = Xy.replace({Xy.columns[-1]: 0}, -1).to_numpy()
     B, n = Xy.shape
-    model = VotedPerceptron(args, n - 1, B)
+    model = VotedPerceptron(args, n, B)
     weights, votes = model.train(Xy)
     # print('The weights are: {}, the votes are: {}'.format(weights, votes))
     # print(np.sum(weights, axis=0))
