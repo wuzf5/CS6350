@@ -82,7 +82,7 @@ if __name__ == "__main__":
     parser.add_argument("--gamma", type=float, default=0.1, help='[0.1, 0.5, 1, 5, 100]')
     parser.add_argument("--T", type=int, default=100)
     parser.add_argument("--a", type=float, default=0.1)
-    parser.add_argument("--C", type=float, default=100/873, help='[100/873, 500/873, 700/873]')
+    parser.add_argument("--C", type=float, default=100/873, help='[100/873, 500/873, 700/873], or [0.115, 0.573, 0.802]')
     args = parser.parse_args()
 
     Xy = pd.read_csv('../../../Datasets/bank-note/train.csv', header=None)
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     print('The learned w is: {}'.format(w))
     print('The learned b is: {}'.format(b))
     # print('The support vectors are {}'.format(svs))
-    # np.save('svs_C{}_gamma{}'.format(args.C, args.gamma))
+    np.save('svs_C{}_gamma{}'.format(args.C, args.gamma), svs)
     predictions = model.predict(X)
     avg_err = 1 - (predictions == y).mean()
     print('Training error: {}'.format(avg_err))
@@ -101,8 +101,6 @@ if __name__ == "__main__":
     Xy = pd.read_csv('../../../Datasets/bank-note/test.csv', header=None)
     Xy = Xy.replace({Xy.columns[-1]: 0}, -1).to_numpy()
     X, y = Xy[:, :-1], Xy[:, -1]
-    # prediction = model.predict_one(np.array([4.5459,8.1674,-2.4586,-1.4621]))
-    # print(prediction)
     predictions = model.predict(X)
     avg_err = 1 - (predictions == y).mean()
     print('Test error: {}'.format(avg_err))
