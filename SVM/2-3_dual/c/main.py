@@ -94,6 +94,8 @@ if __name__ == "__main__":
     print('The learned b is: {}'.format(b))
     # print('The support vectors are {}'.format(svs))
     np.save('svs_C{}_gamma{}'.format(args.C, args.gamma), svs)
+    np.save('w_C{}_gamma{}'.format(args.C, args.gamma), w)
+    np.save('b_C{}_gamma{}'.format(args.C, args.gamma), b)
     predictions = model.predict(X)
     avg_err = 1 - (predictions == y).mean()
     print('Training error: {}'.format(avg_err))

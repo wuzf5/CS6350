@@ -65,7 +65,7 @@ class DualSVM:
     
     def predict(self, X):
         return np.sign([
-            np.sum(self.alphas[self.alphas > 1e-8] * 
+            np.sum(self.alphas[self.alphas > 1e-5] * 
                    self.support_vector_labels * 
                    np.array([(sv * x).sum() for sv in self.support_vectors])) + self.b
             for x in X
